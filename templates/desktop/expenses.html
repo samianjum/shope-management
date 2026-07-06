@@ -1,25 +1,209 @@
-
 {% extends "desktop/base.html" %}
+{% load static %}
+{% block title %}Expenses & Udhaar | {{ tenant.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Card styles */
+    .expense-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 0.75rem;
+        padding: 1rem 0.75rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        transition: 0.2s;
+    }
+    .stat-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+    .stat-card .icon {
+        font-size: 1.8rem;
+        color: #e67e22;
+        margin-bottom: 0.2rem;
+    }
+    .stat-card .label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        letter-spacing: 0.03em;
+        font-weight: 600;
+    }
+    .stat-card .value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .stat-card .badge-count {
+        font-size: 0.7rem;
+        background: #f1f3f5;
+        padding: 0.1rem 0.5rem;
+        border-radius: 30px;
+        color: #495057;
+    }
+    .summary-strip {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0;
+    }
+    .summary-item {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        flex: 1 0 auto;
+        min-width: 120px;
+        text-align: center;
+    }
+    .summary-item .label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 600;
+    }
+    .summary-item .value {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    .summary-item.given .value { color: #e67e22; }
+    .summary-item.taken .value { color: #3498db; }
+    .summary-item.balance .value { color: #2ecc71; }
+    .summary-item.total .value { color: #1a1a2e; }
+
+    .expense-list-item {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .expense-list-item .info { flex: 1; min-width: 150px; }
+    .expense-list-item .info .title { font-weight: 600; }
+    .expense-list-item .info .meta { font-size: 0.8rem; color: #6c757d; }
+    .expense-list-item .amount { font-weight: 700; color: #e67e22; }
+    .expense-list-item .badge-status {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.6rem;
+        border-radius: 30px;
+        font-weight: 600;
+    }
+    .badge-status.given { background: #fef3e2; color: #d35400; }
+    .badge-status.taken { background: #e3f0fd; color: #2980b9; }
+    .badge-status.repaid { background: #e8f8f0; color: #1e7e34; }
+    .badge-status.unpaid { background: #f8d7da; color: #b02a37; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>💰 Expenses & Udhaar</h2>
-<a href="/portal/{{ tenant.schema_name }}/expenses/add/" class="btn btn-primary">+ Add</a>
-<p>Total Given (pending): ₹{{ total_given }} | Total Taken (pending): ₹{{ total_taken }}</p>
-<table class="table">
-    <tr><th>Title</th><th>Amount</th><th>Category</th><th>Person</th><th>Due Date</th><th>Repaid</th><th>Action</th></tr>
-    {% for e in expenses %}
-    <tr>
-        <td>{{ e.title }}</td>
-        <td>₹{{ e.amount }}</td>
-        <td>{{ e.category }}</td>
-        <td>{{ e.person_name }}</td>
-        <td>{{ e.due_date|default:"-" }}</td>
-        <td>{{ e.is_repaid|yesno:"Yes,No" }}</td>
-        <td>
-            {% if not e.is_repaid and e.category == 'given_loan' or e.category == 'taken_loan' %}
-                <a href="/portal/{{ tenant.schema_name }}/expenses/repay/{{ e.id }}/" class="btn btn-sm btn-success">Mark Repaid</a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>💰 Expenses & Udhaar</h2>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/add/" class="btn btn-primary">+ Add Expense</a>
+</div>
+
+<!-- Stats Cards -->
+<div class="expense-card-grid">
+    <a href="/portal/{{ tenant.schema_name }}/expenses/daily/" class="stat-card text-decoration-none">
+        <div class="icon"><i class="fas fa-receipt"></i></div>
+        <div class="label">Daily Expenses</div>
+        <div class="value">{{ daily_expenses_count }}</div>
+        <div class="badge-count">Active</div>
+    </a>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/loans/given/" class="stat-card text-decoration-none">
+        <div class="icon"><i class="fas fa-hand-holding-usd"></i></div>
+        <div class="label">Loans Given</div>
+        <div class="value">{{ loans_given_count }}</div>
+        <div class="badge-count">Unrepaid</div>
+    </a>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/loans/taken/" class="stat-card text-decoration-none">
+        <div class="icon"><i class="fas fa-hand-holding-heart"></i></div>
+        <div class="label">Loans Taken</div>
+        <div class="value">{{ loans_taken_count }}</div>
+        <div class="badge-count">Unrepaid</div>
+    </a>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/reminders/" class="stat-card text-decoration-none">
+        <div class="icon"><i class="fas fa-bell"></i></div>
+        <div class="label">Reminders</div>
+        <div class="value">{{ reminders_count }}</div>
+        <div class="badge-count">Pending</div>
+    </a>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/workers/" class="stat-card text-decoration-none" style="grid-column: span 2;">
+        <div class="icon"><i class="fas fa-users"></i></div>
+        <div class="label">Workers</div>
+        <div class="value">{{ workers_count }}</div>
+        <div class="badge-count">Active</div>
+    </a>
+</div>
+
+<!-- Summary Strip -->
+<div class="summary-strip">
+    <div class="summary-item total">
+        <div class="label">Total Expenses</div>
+        <div class="value">₹{{ total_expenses|floatformat:2 }}</div>
+    </div>
+    <div class="summary-item given">
+        <div class="label">Given (Udhaar)</div>
+        <div class="value">₹{{ total_given|floatformat:2 }}</div>
+    </div>
+    <div class="summary-item taken">
+        <div class="label">Taken</div>
+        <div class="value">₹{{ total_taken|floatformat:2 }}</div>
+    </div>
+    <div class="summary-item balance">
+        <div class="label">Net Balance</div>
+        <div class="value">₹{{ net_balance|floatformat:2 }}</div>
+    </div>
+</div>
+
+<!-- Recent Expenses List -->
+<h5 class="fw-bold mb-3">Recent Transactions</h5>
+{% for e in expenses|slice:":10" %}
+<div class="expense-list-item">
+    <div class="info">
+        <div class="title">{{ e.title }}</div>
+        <div class="meta">
+            {{ e.category|title }}
+            {% if e.person_name %} · {{ e.person_name }}{% endif %}
+            · {{ e.date|date:"d M Y H:i" }}
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="amount">₹{{ e.amount|floatformat:2 }}</span>
+        {% if e.is_credit %}
+            <span class="badge-status given">Given</span>
+        {% elif e.category == 'taken_loan' %}
+            <span class="badge-status taken">Taken</span>
+        {% endif %}
+        {% if e.is_repaid %}
+            <span class="badge-status repaid">Repaid</span>
+        {% else %}
+            {% if e.is_credit or e.category == 'taken_loan' %}
+                <span class="badge-status unpaid">Unpaid</span>
             {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+        {% endif %}
+        {% if not e.is_repaid and e.is_credit or not e.is_repaid and e.category == 'taken_loan' %}
+            <a href="/portal/{{ tenant.schema_name }}/expenses/repay/{{ e.id }}/" class="btn btn-sm btn-success">Mark Repaid</a>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="text-center text-muted py-4">No expenses recorded yet.</div>
+{% endfor %}
+{% if expenses|length > 10 %}
+    <div class="text-center mt-2">
+        <a href="/portal/{{ tenant.schema_name }}/expenses/daily/" class="btn btn-link">View all →</a>
+    </div>
+{% endif %}
 {% endblock %}

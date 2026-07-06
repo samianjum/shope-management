@@ -1,0 +1,65 @@
+{% extends "desktop/base.html" %}
+{% block title %}Add Worker | {{ tenant.name }}{% endblock %}
+{% block content %}
+<h5 class="fw-bold">Add Worker</h5>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>Name *</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Father Name</label>
+        <input type="text" name="father_name" class="form-control">
+    </div>
+    <div class="form-group">
+        <label>CNIC</label>
+        <input type="text" name="cnic" class="form-control">
+    </div>
+    <div class="form-group">
+        <label>Phone</label>
+        <input type="text" name="phone" class="form-control">
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <textarea name="address" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Resignation Date</label>
+        <input type="date" name="resignation_date" class="form-control">
+    </div>
+    <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-control">
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="resigned">Resigned</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Salary Type</label>
+        <select name="salary_type" class="form-control">
+            <option value="daily">Daily</option>
+            <option value="monthly">Monthly</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Salary Amount</label>
+        <input type="number" name="salary_amount" step="0.01" class="form-control">
+    </div>
+    <div class="form-group">
+        <label>Category</label>
+        <select name="category" class="form-control">
+            <option value="">None</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">Save</button>
+</form>
+{% endblock %}

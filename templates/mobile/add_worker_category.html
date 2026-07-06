@@ -1,0 +1,17 @@
+{% extends "mobile/base.html" %}
+{% block title %}Add Worker Category | {{ tenant.name }}{% endblock %}
+{% block body %}
+<h5 class="fw-bold">Add Worker Category</h5>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>Category Name *</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" class="form-control"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary-custom w-100">Save</button>
+</form>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "desktop/base.html" %}
+{% block title %}{{ title }} | {{ tenant.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>{{ title }}</h2>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/add/" class="btn btn-primary">+ Add</a>
+</div>
+<div class="row">
+    <div class="col-12">
+        {% for e in expenses %}
+        <div class="card mb-2">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">{{ e.title }}</h6>
+                    <div class="text-muted small">
+                        {{ e.category|title }}
+                        {% if e.person_name %} · {{ e.person_name }}{% endif %}
+                        · {{ e.date|date:"d M Y H:i" }}
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-warning">₹{{ e.amount|floatformat:2 }}</span>
+                    {% if e.is_credit %}<span class="badge bg-warning">Given</span>{% endif %}
+                    {% if e.category == 'taken_loan' %}<span class="badge bg-info">Taken</span>{% endif %}
+                    {% if e.is_repaid %}<span class="badge bg-success">Repaid</span>{% else %}{% if e.is_credit or e.category == 'taken_loan' %}<span class="badge bg-danger">Unpaid</span>{% endif %}{% endif %}
+                    {% if not e.is_repaid and e.is_credit or not e.is_repaid and e.category == 'taken_loan' %}
+                        <a href="/portal/{{ tenant.schema_name }}/expenses/repay/{{ e.id }}/" class="btn btn-sm btn-success">Mark Repaid</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-4">No records found</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

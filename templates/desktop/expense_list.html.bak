@@ -1,0 +1,26 @@
+{% extends "desktop/base.html" %}
+{% block title %}{{ title }} | {{ tenant.name }}{% endblock %}
+{% block content %}
+<h5 class="fw-bold">{{ title }}</h5>
+<a href="/portal/{{ tenant.schema_name }}/expenses/add/" class="btn btn-primary btn-sm mb-2">+ Add</a>
+<div class="expenses-list">
+    {% for e in expenses %}
+    <div class="expense-item">
+        <div class="top">
+            <span>{{ e.title }}</span>
+            <span class="amount">₹{{ e.amount|floatformat:2 }}</span>
+        </div>
+        <div class="meta">
+            <span>{{ e.category|title }}</span>
+            {% if e.person_name %}<span>👤 {{ e.person_name }}</span>{% endif %}
+            <span>{{ e.date|date:"d M Y H:i" }}</span>
+        </div>
+        {% if e.is_credit and not e.is_repaid or e.category == 'taken_loan' and not e.is_repaid %}
+        <a href="/portal/{{ tenant.schema_name }}/expenses/repay/{{ e.id }}/" class="action-link">Mark Repaid</a>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="empty-state">No records</div>
+    {% endfor %}
+</div>
+{% endblock %}

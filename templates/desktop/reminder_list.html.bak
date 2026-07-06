@@ -1,0 +1,24 @@
+{% extends "desktop/base.html" %}
+{% block title %}Reminders | {{ tenant.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="fw-bold">Reminders</h5>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/reminders/add/" class="btn btn-primary btn-sm">+ Add</a>
+</div>
+{% for r in reminders %}
+<div class="expense-item" style="border-left: 3px solid {% if r.is_completed %}#2ecc71{% else %}#e67e22{% endif %};">
+    <div class="top">
+        <span>{{ r.title }}</span>
+        <span>{{ r.remind_date|date:"d M H:i" }}</span>
+    </div>
+    <div class="meta">{{ r.notes|truncatechars:50 }}</div>
+    {% if not r.is_completed %}
+    <a href="/portal/{{ tenant.schema_name }}/expenses/reminders/complete/{{ r.id }}/" class="action-link">Got it</a>
+    {% else %}
+    <span class="text-muted">Done</span>
+    {% endif %}
+</div>
+{% empty %}
+<div class="empty-state">No reminders</div>
+{% endfor %}
+{% endblock %}

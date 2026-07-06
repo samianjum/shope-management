@@ -1,0 +1,65 @@
+{% extends "desktop/base.html" %}
+{% block title %}Edit Worker | {{ tenant.name }}{% endblock %}
+{% block content %}
+<h5 class="fw-bold">Edit Worker</h5>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>Name *</label>
+        <input type="text" name="name" class="form-control" value="{{ worker.name }}" required>
+    </div>
+    <div class="form-group">
+        <label>Father Name</label>
+        <input type="text" name="father_name" class="form-control" value="{{ worker.father_name }}">
+    </div>
+    <div class="form-group">
+        <label>CNIC</label>
+        <input type="text" name="cnic" class="form-control" value="{{ worker.cnic }}">
+    </div>
+    <div class="form-group">
+        <label>Phone</label>
+        <input type="text" name="phone" class="form-control" value="{{ worker.phone }}">
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <textarea name="address" class="form-control">{{ worker.address }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date" class="form-control" value="{{ worker.joining_date|date:'Y-m-d' }}" required>
+    </div>
+    <div class="form-group">
+        <label>Resignation Date</label>
+        <input type="date" name="resignation_date" class="form-control" value="{{ worker.resignation_date|date:'Y-m-d' }}">
+    </div>
+    <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-control">
+            <option value="active" {% if worker.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="suspended" {% if worker.status == 'suspended' %}selected{% endif %}>Suspended</option>
+            <option value="resigned" {% if worker.status == 'resigned' %}selected{% endif %}>Resigned</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Salary Type</label>
+        <select name="salary_type" class="form-control">
+            <option value="daily" {% if worker.salary_type == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="monthly" {% if worker.salary_type == 'monthly' %}selected{% endif %}>Monthly</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Salary Amount</label>
+        <input type="number" name="salary_amount" step="0.01" class="form-control" value="{{ worker.salary_amount }}">
+    </div>
+    <div class="form-group">
+        <label>Category</label>
+        <select name="category" class="form-control">
+            <option value="">None</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if worker.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">Update</button>
+</form>
+{% endblock %}

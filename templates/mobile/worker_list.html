@@ -1,0 +1,27 @@
+{% extends "mobile/base.html" %}
+{% block title %}Workers | {{ tenant.name }}{% endblock %}
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="fw-bold">Workers</h5>
+    <div>
+        <a href="/portal/{{ tenant.schema_name }}/expenses/workers/category/add/" class="btn btn-outline-secondary btn-sm">+ Category</a>
+        <a href="/portal/{{ tenant.schema_name }}/expenses/workers/add/" class="btn btn-primary-custom btn-sm">+ Worker</a>
+    </div>
+</div>
+{% for w in workers %}
+<div class="expense-item">
+    <div class="top">
+        <span>{{ w.name }}</span>
+        <span>₹{{ w.salary_amount }}/{{ w.salary_type }}</span>
+    </div>
+    <div class="meta">
+        <span>{{ w.category.name|default:"No Category" }}</span>
+        <span>{{ w.status|title }}</span>
+        <span>Joining: {{ w.joining_date|date:"d M Y" }}</span>
+    </div>
+    <a href="/portal/{{ tenant.schema_name }}/expenses/workers/edit/{{ w.id }}/" class="action-link">Edit</a>
+</div>
+{% empty %}
+<div class="empty-state">No workers</div>
+{% endfor %}
+{% endblock %}
