@@ -14,11 +14,14 @@ from expenses.models import Expense
 def dashboard(request, **kwargs):
     tenant = request.tenant
     # Auto-ready pending orders
-    pending_orders = ChakkiOrder.objects.filter(status='pending')
+    
+    pending_orders = ChakkiOrder.objects.filter(status='pending', amount_paid=0)
     for order in pending_orders:
         if order.ready_time and order.ready_time <= timezone.now():
             order.status = 'ready'
             order.save()
+            
+
             messages.info(request, f"Order #{order.id} for {order.customer.name} is READY!")
 
     orders = ChakkiOrder.objects.all()
@@ -64,6 +67,8 @@ def dashboard(request, **kwargs):
     return render(request, template, context)
 
 @login_required
+
+@login_required
 def add_order(request, **kwargs):
     setting, _ = ChakkiSetting.objects.get_or_create(id=1)
     categories = ChakkiCategory.objects.all()
@@ -73,9 +78,20 @@ def add_order(request, **kwargs):
             phone=request.POST.get('phone'),
             address=request.POST.get('address')
         )
+        # Calculate ready time first
+        time_type = request.POST.get('time_type')
+        time_value = int(request.POST.get('time_value', 0))
+        ready_time = timezone.now()
+        if time_type == 'minutes':
+            ready_time += timezone.timedelta(minutes=time_value)
+        elif time_type == 'hours':
+            ready_time += timezone.timedelta(hours=time_value)
+        elif time_type == 'days':
+            ready_time += timezone.timedelta(days=time_value)
+
         order = ChakkiOrder.objects.create(
             customer=cust,
-            ready_time=timezone.now(),
+            ready_time=ready_time,
             status='pending'
         )
         item_count = int(request.POST.get('item_count', 0))
@@ -92,16 +108,7 @@ def add_order(request, **kwargs):
                     is_cleaning_done=cleaning
                 )
                 item.save()
-        time_type = request.POST.get('time_type')
-        time_value = int(request.POST.get('time_value', 0))
-        ready_time = timezone.now()
-        if time_type == 'minutes':
-            ready_time += timezone.timedelta(minutes=time_value)
-        elif time_type == 'hours':
-            ready_time += timezone.timedelta(hours=time_value)
-        elif time_type == 'days':
-            ready_time += timezone.timedelta(days=time_value)
-        order.ready_time = ready_time
+        # Save again to recalculate total and payment status
         order.save()
         messages.success(request, f"Order #{order.id} created! Ready at {ready_time.strftime('%I:%M %p')}")
         return redirect('chakki_dashboard', schema_name=request.tenant.schema_name)
@@ -157,6 +164,7 @@ def order_list(request, order_type, **kwargs):
     template = f'mobile/order_list.html' if request.mobile else f'desktop/order_list.html'
     return render(request, template, context)
 
+
 @login_required
 def order_detail(request, order_id, **kwargs):
     order = get_object_or_404(ChakkiOrder, id=order_id)
@@ -169,6 +177,9 @@ def order_detail(request, order_id, **kwargs):
             order.amount_paid += amount
             if order.amount_paid > order.total_amount:
                 order.amount_paid = order.total_amount
+            if order.amount_paid >= order.total_amount and order.total_amount > 0:
+                order.status = 'completed'
+                order.completed_at = timezone.now()
             order.save()
             messages.success(request, f"Payment of ₹{amount} added. Remaining: ₹{order.remaining_amount}")
         return redirect('order_detail', schema_name=request.tenant.schema_name, order_id=order.id)
