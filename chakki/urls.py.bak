@@ -12,5 +12,4 @@ urlpatterns = [
     path('transcript/<int:order_id>/', views.generate_transcript, name='generate_transcript'),
     path('settings/', views.settings_view, name='chakki_settings'),
     path('search/', views.search, name='chakki_search'),
-    path('transcript-modal/<int:order_id>/', views.get_transcript_modal, name='get_transcript_modal'),
 ]

@@ -1,0 +1,43 @@
+{% extends "desktop/base.html" %}
+{% block title %}Chakki Orders | {{ tenant.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>📋 Orders</h2>
+    <a href="/portal/{{ tenant.schema_name }}/chakki/add/" class="btn btn-primary">+ New Order</a>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="?status=all">All <span class="badge bg-secondary">{{ orders.count }}</span></a></li>
+    <li class="nav-item"><a class="nav-link {% if status_filter == 'pending' %}active{% endif %}" href="?status=pending">Pending <span class="badge bg-secondary">{{ pending_count }}</span></a></li>
+    <li class="nav-item"><a class="nav-link {% if status_filter == 'ready' %}active{% endif %}" href="?status=ready">Ready <span class="badge bg-secondary">{{ ready_count }}</span></a></li>
+    <li class="nav-item"><a class="nav-link {% if status_filter == 'partial' %}active{% endif %}" href="?status=partial">Partial <span class="badge bg-secondary">{{ partial_count }}</span></a></li>
+    <li class="nav-item"><a class="nav-link {% if status_filter == 'completed' %}active{% endif %}" href="?status=completed">Completed <span class="badge bg-secondary">{{ completed_count }}</span></a></li>
+</ul>
+
+<table class="table table-hover">
+    <thead>
+        <tr><th>#ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Ready Time</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.customer.name }}</td>
+            <td>₹{{ order.total_amount }}</td>
+            <td>
+                {% if order.status == 'ready' %}<span class="badge bg-warning">Ready</span>
+                {% elif order.status == 'completed' %}<span class="badge bg-success">Done</span>
+                {% elif order.payment_status == 'partial' %}<span class="badge bg-info">Partial</span>
+                {% else %}<span class="badge bg-secondary">Pending</span>{% endif %}
+            </td>
+            <td>{{ order.ready_time|date:"d M H:i" }}</td>
+            <td><a href="/portal/{{ tenant.schema_name }}/chakki/order/{{ order.id }}/" class="btn btn-sm btn-primary">View</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">No orders</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

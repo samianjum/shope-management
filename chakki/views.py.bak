@@ -351,11 +351,3 @@ def search(request, **kwargs):
     }
     template = 'mobile/search.html' if request.mobile else 'desktop/search.html'
     return render(request, template, context)
-
-
-@login_required
-def get_transcript_modal(request, order_id, **kwargs):
-    """Return the transcript content as HTML for modal display."""
-    order = get_object_or_404(ChakkiOrder, id=order_id)
-    context = {'order': order, 'tenant': request.tenant}
-    return render(request, 'mobile/transcript_modal_content.html', context)

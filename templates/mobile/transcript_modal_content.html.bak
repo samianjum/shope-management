@@ -1,0 +1,149 @@
+{% load static %}
+<div class="transcript-modal-content">
+    <style>
+        /* Transcript styling (reuse from existing, but with modal adjustments) */
+        .transcript-container {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            position: relative;
+        }
+        .transcript-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+        .transcript-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .transcript-header p {
+            margin: 4px 0 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .transcript-body h3 {
+            font-size: 1.1rem;
+            margin: 0 0 4px 0;
+        }
+        .transcript-body .customer-details {
+            font-size: 0.9rem;
+            color: #495057;
+            margin-bottom: 12px;
+        }
+        .transcript-body .customer-details strong {
+            color: #1a1a2e;
+        }
+        .transcript-body table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .transcript-body table th,
+        .transcript-body table td {
+            padding: 6px 8px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        .transcript-body table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .transcript-body table .text-right {
+            text-align: right;
+        }
+        .transcript-body .totals {
+            margin-top: 12px;
+            font-size: 0.95rem;
+        }
+        .transcript-body .totals .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        .transcript-body .totals .row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+        .transcript-footer {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+        .watermark-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 60px;
+            color: rgba(0,0,0,0.05);
+            pointer-events: none;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        @media print {
+            .transcript-container {
+                box-shadow: none;
+                padding: 10px;
+                border-radius: 0;
+            }
+            .watermark-text {
+                color: rgba(0,0,0,0.08);
+            }
+        }
+    </style>
+    <div class="transcript-container">
+        <div class="watermark-text">
+            {% if order.payment_status == 'paid' %}PAID{% elif order.payment_status == 'partial' %}PARTIAL{% else %}UNPAID{% endif %}
+        </div>
+        <div class="transcript-header">
+            <h1>{{ tenant.name }}</h1>
+            <p>Flour Mill Invoice</p>
+        </div>
+        <div class="transcript-body">
+            <h3>Order #{{ order.id }}</h3>
+            <div class="customer-details">
+                <strong>Customer:</strong> {{ order.customer.name }}<br>
+                <strong>Phone:</strong> {{ order.customer.phone|default:"N/A" }}<br>
+                <strong>Address:</strong> {{ order.customer.address|default:"N/A" }}
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Category</th><th>KG</th><th>Cleaning</th><th>Grinding</th><th>Cleaning Charges</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.category.name }}</td>
+                        <td>{{ item.total_kg }}</td>
+                        <td>{{ item.is_cleaning_done|yesno:"Yes,No" }}</td>
+                        <td class="text-right">₹{{ item.grinding_charges|floatformat:2 }}</td>
+                        <td class="text-right">₹{{ item.cleaning_charges|floatformat:2 }}</td>
+                        <td class="text-right">₹{{ item.item_total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="totals">
+                <div class="row"><span>Grand Total</span><span>₹{{ order.total_amount|floatformat:2 }}</span></div>
+                <div class="row"><span>Amount Paid</span><span>₹{{ order.amount_paid|floatformat:2 }}</span></div>
+                <div class="row"><span>Remaining</span><span>₹{{ order.remaining_amount|floatformat:2 }}</span></div>
+            </div>
+        </div>
+        <div class="transcript-footer">
+            Generated on {% now "d M Y H:i" %} · Thank you!
+        </div>
+    </div>
+</div>

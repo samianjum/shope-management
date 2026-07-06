@@ -325,12 +325,14 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Search (inside main content, like axis) -->
+        {% block search_bar %}
         <div class="search-wrapper">
             <form action="/portal/{{ tenant.schema_name }}/chakki/search/" method="get" class="search-input-container">
                 <i class="fas fa-search search-icon"></i>
                 <input type="search" name="q" placeholder="Search orders, customers..." aria-label="Search">
             </form>
         </div>
+        {% endblock %}
         {% block body %}{% endblock %}
     </div>
 
@@ -374,5 +376,11 @@
         setDeviceCookie();
     })();
     </script>
+
+    <!-- html2canvas for image capture -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </body>
 </html>

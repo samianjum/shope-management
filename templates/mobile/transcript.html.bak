@@ -277,62 +277,12 @@
         </div>
     </div>
 
-    <div class="print-actions no-print" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px;">
-        <button onclick="window.print()" style="background:#2c3e50; color:white; border:none; border-radius:30px; padding:10px 22px; font-weight:600; display:inline-flex; align-items:center; gap:8px; cursor:pointer; transition:0.2s;">
-            <i class="fas fa-print"></i> Print
-        </button>
-        <div style="display:inline-flex; align-items:center; gap:6px; background:#f8f9fa; border-radius:30px; padding:2px 4px; border:1px solid #dee2e6;">
-            <select id="downloadFormat" style="border:none; background:transparent; padding:8px 12px; font-weight:500; outline:none; border-radius:30px;">
-                <option value="png">PNG</option>
-                <option value="jpeg">JPEG</option>
-                <option value="pdf">PDF</option>
-            </select>
-            <button id="downloadTranscriptBtn" style="background:#e67e22; color:white; border:none; border-radius:30px; padding:8px 20px; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; transition:0.2s;">
-                <i class="fas fa-download"></i> Download
-            </button>
-        </div>
+    <div class="print-actions no-print">
+        <button onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+        <button onclick="window.print()" class="secondary"><i class="fas fa-download"></i> Download PDF</button>
     </div>
 
     <!-- Font Awesome for icons (if not already loaded) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const downloadBtn = document.getElementById('downloadTranscriptBtn');
-    const formatSelect = document.getElementById('downloadFormat');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', function() {
-            const format = formatSelect.value;
-            const container = document.querySelector('.transcript-container');
-            if (!container) return;
-            html2canvas(container, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            }).then(canvas => {
-                if (format === 'pdf') {
-                    const imgData = canvas.toDataURL('image/png');
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save('transcript.pdf');
-                } else {
-                    const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
-                    const ext = format === 'png' ? 'png' : 'jpg';
-                    const link = document.createElement('a');
-                    link.download = `transcript.${ext}`;
-                    link.href = canvas.toDataURL(mimeType);
-                    link.click();
-                }
-            }).catch(err => {
-                alert('Failed to generate download: ' + err.message);
-            });
-        });
-    }
-});
-</script>
-
 </body>
 </html>
