@@ -1,11 +1,83 @@
 
 {% extends "desktop/base.html" %}
 {% block content %}
-<h2>⚙️ Rates Setting</h2>
-<form method="post">
-    {% csrf_token %}
-    <label>Grinding per KG</label><input name="grinding_rate" value="{{ setting.grinding_rate }}" class="form-control">
-    <label>Cleaning per KG</label><input name="cleaning_rate" value="{{ setting.cleaning_rate }}" class="form-control">
-    <button class="btn btn-primary mt-2">Save</button>
-</form>
+<h2>⚙️ Settings</h2>
+
+<!-- Rates Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Grinding & Cleaning Rates</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_rates">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Grinding per KG</label>
+                    <input name="grinding_rate" value="{{ setting.grinding_rate }}" class="form-control" step="0.01" type="number" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Cleaning per KG</label>
+                    <input name="cleaning_rate" value="{{ setting.cleaning_rate }}" class="form-control" step="0.01" type="number" required>
+                </div>
+            </div>
+            <button class="btn btn-primary mt-3">Save Rates</button>
+        </form>
+    </div>
+</div>
+
+<!-- Categories Section -->
+<div class="card">
+    <div class="card-header">
+        <h5>Categories</h5>
+    </div>
+    <div class="card-body">
+        <!-- Add Category Form -->
+        <form method="post" class="row g-2 mb-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_category">
+            <div class="col-md-4">
+                <input type="text" name="category_name" class="form-control" placeholder="Category name" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="category_description" class="form-control" placeholder="Description (optional)">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-success">Add Category</button>
+            </div>
+        </form>
+
+        <!-- Existing Categories List -->
+        <table class="table table-bordered">
+            <thead>
+                <tr><th>Name</th><th>Description</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <form method="post" class="row g-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="edit_category">
+                        <input type="hidden" name="category_id" value="{{ cat.id }}">
+                        <td><input type="text" name="category_name" value="{{ cat.name }}" class="form-control form-control-sm"></td>
+                        <td><input type="text" name="category_description" value="{{ cat.description }}" class="form-control form-control-sm"></td>
+                        <td>
+                            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="if(confirm('Delete this category?')) { document.getElementById('delete_{{ cat.id }}').submit(); }">Delete</button>
+                        </td>
+                    </form>
+                    <form method="post" id="delete_{{ cat.id }}" style="display:none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_category">
+                        <input type="hidden" name="category_id" value="{{ cat.id }}">
+                    </form>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No categories yet. Add one above.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

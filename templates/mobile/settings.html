@@ -1,11 +1,70 @@
 
 {% extends "mobile/base.html" %}
 {% block content %}
-<h2>⚙️ Rates Setting</h2>
-<form method="post">
-    {% csrf_token %}
-    <label>Grinding per KG</label><input name="grinding_rate" value="{{ setting.grinding_rate }}" class="form-control">
-    <label>Cleaning per KG</label><input name="cleaning_rate" value="{{ setting.cleaning_rate }}" class="form-control">
-    <button class="btn btn-primary mt-2">Save</button>
-</form>
+<h2>⚙️ Settings</h2>
+
+<!-- Rates -->
+<div class="card mb-3">
+    <div class="card-header"><h5>Rates</h5></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_rates">
+            <div class="mb-2">
+                <label>Grinding per KG</label>
+                <input name="grinding_rate" value="{{ setting.grinding_rate }}" class="form-control" step="0.01" type="number" required>
+            </div>
+            <div class="mb-2">
+                <label>Cleaning per KG</label>
+                <input name="cleaning_rate" value="{{ setting.cleaning_rate }}" class="form-control" step="0.01" type="number" required>
+            </div>
+            <button class="btn btn-primary w-100">Save Rates</button>
+        </form>
+    </div>
+</div>
+
+<!-- Categories -->
+<div class="card">
+    <div class="card-header"><h5>Categories</h5></div>
+    <div class="card-body">
+        <form method="post" class="mb-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_category">
+            <div class="mb-2">
+                <input type="text" name="category_name" class="form-control" placeholder="Category name" required>
+            </div>
+            <div class="mb-2">
+                <input type="text" name="category_description" class="form-control" placeholder="Description (optional)">
+            </div>
+            <button class="btn btn-success w-100">Add Category</button>
+        </form>
+
+        {% for cat in categories %}
+        <div class="card mb-2">
+            <form method="post" class="p-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_category">
+                <input type="hidden" name="category_id" value="{{ cat.id }}">
+                <div class="mb-1">
+                    <input type="text" name="category_name" value="{{ cat.name }}" class="form-control form-control-sm">
+                </div>
+                <div class="mb-1">
+                    <input type="text" name="category_description" value="{{ cat.description }}" class="form-control form-control-sm">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1">Save</button>
+                    <button type="button" class="btn btn-sm btn-danger flex-grow-1" onclick="if(confirm('Delete this category?')) { document.getElementById('delete_{{ cat.id }}').submit(); }">Delete</button>
+                </div>
+            </form>
+            <form method="post" id="delete_{{ cat.id }}" style="display:none;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_category">
+                <input type="hidden" name="category_id" value="{{ cat.id }}">
+            </form>
+        </div>
+        {% empty %}
+        <p>No categories yet.</p>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

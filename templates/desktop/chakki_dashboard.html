@@ -5,7 +5,13 @@
     <h2>🌾 Chakki Dashboard</h2>
     <a href="/portal/{{ tenant.schema_name }}/chakki/add/" class="btn btn-primary">+ New Order</a>
 </div>
-<div class="row">
+{% if ready_count > 0 %}
+<div class="alert alert-warning blink" role="alert">
+    <strong><i class="fas fa-exclamation-triangle"></i> {{ ready_count }} order(s) ready!</strong> 
+    Please complete them.
+</div>
+{% endif %}
+<div class="row mb-3">
     <div class="col-md-12">
         <a href="/portal/{{ tenant.schema_name }}/chakki/orders/pending/" class="btn btn-outline-primary me-2">Pending <span class="badge bg-primary">{{ pending }}</span></a>
         <a href="/portal/{{ tenant.schema_name }}/chakki/orders/ready/" class="btn btn-outline-warning me-2">Ready <span class="badge bg-warning">{{ ready }}</span></a>
@@ -16,14 +22,13 @@
 <h4 class="mt-4">Recent Orders</h4>
 <table class="table table-bordered table-hover">
     <thead>
-        <tr><th>ID</th><th>Customer</th><th>KG</th><th>Total</th><th>Paid</th><th>Status</th><th>Ready</th><th>Action</th></tr>
+        <tr><th>ID</th><th>Customer</th><th>Total</th><th>Paid</th><th>Status</th><th>Ready</th><th>Action</th></tr>
     </thead>
     <tbody>
     {% for o in recent_orders %}
     <tr>
         <td>{{ o.id }}</td>
         <td>{{ o.customer.name }}</td>
-        <td>{{ o.total_kg }}</td>
         <td>₹{{ o.total_amount }}</td>
         <td>₹{{ o.amount_paid }}</td>
         <td>
@@ -36,7 +41,7 @@
         <td><a href="/portal/{{ tenant.schema_name }}/chakki/order/{{ o.id }}/" class="btn btn-sm btn-primary">View</a></td>
     </tr>
     {% empty %}
-    <tr><td colspan="8" class="text-center">No orders yet.</td></tr>
+    <tr><td colspan="7" class="text-center">No orders yet.</td></tr>
     {% endfor %}
     </tbody>
 </table>

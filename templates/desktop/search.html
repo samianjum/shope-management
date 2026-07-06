@@ -1,0 +1,32 @@
+
+{% extends "desktop/base.html" %}
+{% block content %}
+<h2>Search Results for "{{ query }}"</h2>
+{% if not query %}
+    <p>Please enter a search term.</p>
+{% else %}
+    <h5>Orders</h5>
+    <table class="table table-bordered">
+        <tr><th>ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Action</th></tr>
+        {% for o in orders %}
+        <tr>
+            <td>{{ o.id }}</td>
+            <td>{{ o.customer.name }}</td>
+            <td>₹{{ o.total_amount }}</td>
+            <td>{{ o.status }}</td>
+            <td><a href="/portal/{{ tenant.schema_name }}/chakki/order/{{ o.id }}/" class="btn btn-sm btn-primary">View</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No orders found.</td></tr>
+        {% endfor %}
+    </table>
+    <h5>Customers</h5>
+    <ul>
+        {% for c in customers %}
+        <li>{{ c.name }} ({{ c.phone }})</li>
+        {% empty %}
+        <li>No customers found.</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

@@ -11,4 +11,5 @@ urlpatterns = [
     path('complete/<int:order_id>/', views.complete_order, name='complete_order'),
     path('transcript/<int:order_id>/', views.generate_transcript, name='generate_transcript'),
     path('settings/', views.settings_view, name='chakki_settings'),
+    path('search/', views.search, name='chakki_search'),
 ]

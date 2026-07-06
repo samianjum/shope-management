@@ -14,28 +14,44 @@
     <div class="col-md-6">
         <div class="card p-3">
             <h5>Order Details</h5>
-            <p><strong>Total KG:</strong> {{ order.total_kg }}</p>
-            <p><strong>Grinding Charges:</strong> ₹{{ order.grinding_charges }}</p>
-            <p><strong>Cleaning Charges:</strong> ₹{{ order.cleaning_charges }}</p>
             <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
             <p><strong>Amount Paid:</strong> ₹{{ order.amount_paid }}</p>
-            <p><strong>Remaining:</strong> ₹{{ order.remaining_amount }}</p>
+            <p><strong>Remaining:</strong> <span id="remaining_display">₹{{ order.remaining_amount }}</span></p>
             <p><strong>Status:</strong> {{ order.status }} | Payment: {{ order.payment_status }}</p>
             <p><strong>Ready Time:</strong> {{ order.ready_time|date:"d M Y H:i" }}</p>
         </div>
     </div>
 </div>
+<h5>Items</h5>
+<table class="table table-bordered">
+    <tr><th>Category</th><th>KG</th><th>Cleaning</th><th>Grinding</th><th>Cleaning Charges</th><th>Total</th></tr>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.category.name }}</td>
+        <td>{{ item.total_kg }}</td>
+        <td>{{ item.is_cleaning_done|yesno:"Yes,No" }}</td>
+        <td>₹{{ item.grinding_charges }}</td>
+        <td>₹{{ item.cleaning_charges }}</td>
+        <td>₹{{ item.item_total }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No items</td></tr>
+    {% endfor %}
+</table>
 <div class="mt-3">
     {% if order.status != 'completed' %}
-    <form method="post" class="row g-3">
+    <form method="post" class="row g-3" id="paymentForm">
         {% csrf_token %}
         <div class="col-auto">
-            <input type="number" name="payment_amount" step="0.01" class="form-control" placeholder="Payment amount" required>
+            <input type="number" name="payment_amount" id="payment_amount" step="0.01" class="form-control" placeholder="Payment amount" required>
         </div>
         <div class="col-auto">
             <button class="btn btn-success">Add Payment</button>
         </div>
     </form>
+    <div class="mt-2" id="remaining_after_payment">
+        <span class="text-muted">Remaining after payment: ₹<span id="new_remaining">{{ order.remaining_amount }}</span></span>
+    </div>
     <div class="mt-2">
         {% if order.remaining_amount == 0 %}
             <a href="/portal/{{ tenant.schema_name }}/chakki/complete/{{ order.id }}/" class="btn btn-primary">Complete Order</a>
@@ -48,4 +64,19 @@
 <div class="mt-3">
     <a href="/portal/{{ tenant.schema_name }}/chakki/transcript/{{ order.id }}/" target="_blank" class="btn btn-secondary">📄 Transcript</a>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentInput = document.getElementById('payment_amount');
+    const remainingDisplay = document.getElementById('remaining_display');
+    const newRemainingSpan = document.getElementById('new_remaining');
+    const orderRemaining = {{ order.remaining_amount }};
+    if (paymentInput) {
+        paymentInput.addEventListener('input', function() {
+            const entered = parseFloat(this.value) || 0;
+            const newRemaining = Math.max(0, orderRemaining - entered);
+            newRemainingSpan.textContent = newRemaining.toFixed(2);
+        });
+    }
+});
+</script>
 {% endblock %}

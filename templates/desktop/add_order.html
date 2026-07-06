@@ -1,6 +1,9 @@
 
 {% extends "desktop/base.html" %}
 {% block content %}
+<div class="alert alert-info">
+    <strong>Current Rates:</strong> Grinding: ₹{{ setting.grinding_rate }}/kg, Cleaning: ₹{{ setting.cleaning_rate }}/kg
+</div>
 <h2>Add Order</h2>
 <form method="post" id="orderForm">
     {% csrf_token %}
@@ -12,21 +15,47 @@
             <div class="mb-2"><label>Address</label><input name="address" class="form-control"></div>
         </div>
         <div class="col-md-6">
-            <h5>Order Details</h5>
-            <div class="mb-2"><label>Total KG *</label><input name="total_kg" id="total_kg" class="form-control" type="number" step="0.1" required></div>
-            <div class="mb-2"><input type="checkbox" name="cleaning" id="cleaning" value="on"> <label for="cleaning">Cleaning Done</label></div>
-            <div class="mb-2"><label>Ready in</label>
+            <h5>Ready in</h5>
+            <div class="mb-2">
                 <input type="number" name="time_value" class="form-control" placeholder="e.g. 2" value="1">
-                <select name="time_type" class="form-control"><option value="minutes">Minutes</option><option value="hours" selected>Hours</option><option value="days">Days</option></select>
+                <select name="time_type" class="form-control">
+                    <option value="minutes">Minutes</option>
+                    <option value="hours" selected>Hours</option>
+                    <option value="days">Days</option>
+                </select>
             </div>
         </div>
     </div>
+    <h5 class="mt-3">Items</h5>
+    <div id="itemsContainer">
+        <div class="row item-row mb-2">
+            <div class="col-md-4">
+                <select name="category_1" class="form-control category-select">
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="total_kg_1" class="form-control total-kg" step="0.1" placeholder="KG" value="0">
+            </div>
+            <div class="col-md-2">
+                <input type="checkbox" name="cleaning_1" value="on"> Cleaning
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-danger remove-item">Remove</button>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-secondary mt-2" id="addItemBtn">+ Add Item</button>
     <div class="row mt-3">
-        <div class="col-md-4"><div class="card p-2"><h6>Grinding Charges</h6><h4 id="grinding_display">₹0.00</h4></div></div>
-        <div class="col-md-4"><div class="card p-2"><h6>Cleaning Charges</h6><h4 id="cleaning_display">₹0.00</h4></div></div>
-        <div class="col-md-4"><div class="card p-2 bg-info"><h6>Total Amount</h6><h4 id="total_display">₹0.00</h4></div></div>
+        <div class="col-md-4"><div class="card p-2"><h6>Total Grinding</h6><h4 id="total_grinding_display">₹0.00</h4></div></div>
+        <div class="col-md-4"><div class="card p-2"><h6>Total Cleaning</h6><h4 id="total_cleaning_display">₹0.00</h4></div></div>
+        <div class="col-md-4"><div class="card p-2 bg-info"><h6>Grand Total</h6><h4 id="grand_total_display">₹0.00</h4></div></div>
     </div>
     <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#confirmModal" id="previewBtn">Preview & Confirm</button>
+    <input type="hidden" name="item_count" id="item_count" value="1">
 </form>
 
 <!-- Confirmation Modal -->
@@ -37,9 +66,7 @@
         <h5 class="modal-title">Confirm Order</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="modalBody">
-        <!-- Filled by JS -->
-      </div>
+      <div class="modal-body" id="modalBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="confirmSubmit">Confirm Order</button>
@@ -50,53 +77,105 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const totalKg = document.getElementById('total_kg');
-    const cleaning = document.getElementById('cleaning');
-    const grindingDisplay = document.getElementById('grinding_display');
-    const cleaningDisplay = document.getElementById('cleaning_display');
-    const totalDisplay = document.getElementById('total_display');
+    let itemCount = 1;
+    const container = document.getElementById('itemsContainer');
+    const addBtn = document.getElementById('addItemBtn');
+    const totalGrindingDisplay = document.getElementById('total_grinding_display');
+    const totalCleaningDisplay = document.getElementById('total_cleaning_display');
+    const grandTotalDisplay = document.getElementById('grand_total_display');
     const previewBtn = document.getElementById('previewBtn');
     const modalBody = document.getElementById('modalBody');
     const confirmSubmit = document.getElementById('confirmSubmit');
+    const itemCountInput = document.getElementById('item_count');
+    const grindRate = {{ setting.grinding_rate }};
+    const cleanRate = {{ setting.cleaning_rate }};
 
-    function updateCalculations() {
-        const kg = parseFloat(totalKg.value) || 0;
-        const clean = cleaning.checked;
-        fetch('/portal/{{ tenant.schema_name }}/chakki/calculate/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: 'total_kg=' + kg + '&cleaning=' + clean
-        })
-        .then(res => res.json())
-        .then(data => {
-            grindingDisplay.textContent = '₹' + data.grinding_charges.toFixed(2);
-            cleaningDisplay.textContent = '₹' + data.cleaning_charges.toFixed(2);
-            totalDisplay.textContent = '₹' + data.total_amount.toFixed(2);
-            // Store for modal
-            window.calcData = data;
+    function updateTotals() {
+        let totalGrinding = 0, totalCleaning = 0;
+        document.querySelectorAll('.item-row').forEach(row => {
+            const kg = parseFloat(row.querySelector('.total-kg').value) || 0;
+            const cleaning = row.querySelector('input[type="checkbox"]').checked;
+            totalGrinding += kg * grindRate;
+            if (cleaning) totalCleaning += kg * cleanRate;
+        });
+        const grandTotal = totalGrinding + totalCleaning;
+        totalGrindingDisplay.textContent = '₹' + totalGrinding.toFixed(2);
+        totalCleaningDisplay.textContent = '₹' + totalCleaning.toFixed(2);
+        grandTotalDisplay.textContent = '₹' + grandTotal.toFixed(2);
+        window._totals = { grinding: totalGrinding, cleaning: totalCleaning, grand: grandTotal };
+    }
+
+    function addItemRow() {
+        itemCount++;
+        const newRow = document.createElement('div');
+        newRow.className = 'row item-row mb-2';
+        newRow.innerHTML = `
+            <div class="col-md-4">
+                <select name="category_${itemCount}" class="form-control category-select">
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="total_kg_${itemCount}" class="form-control total-kg" step="0.1" placeholder="KG" value="0">
+            </div>
+            <div class="col-md-2">
+                <input type="checkbox" name="cleaning_${itemCount}" value="on"> Cleaning
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-danger remove-item">Remove</button>
+            </div>
+        `;
+        container.appendChild(newRow);
+        itemCountInput.value = itemCount;
+        newRow.querySelector('.total-kg').addEventListener('input', updateTotals);
+        newRow.querySelector('input[type="checkbox"]').addEventListener('change', updateTotals);
+        newRow.querySelector('.remove-item').addEventListener('click', function() {
+            if (container.children.length > 1) {
+                newRow.remove();
+                itemCount--;
+                itemCountInput.value = itemCount;
+                updateTotals();
+            }
         });
     }
 
-    totalKg.addEventListener('input', updateCalculations);
-    cleaning.addEventListener('change', updateCalculations);
-    updateCalculations();
+    document.querySelectorAll('.total-kg').forEach(el => el.addEventListener('input', updateTotals));
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => el.addEventListener('change', updateTotals));
+    document.querySelector('.remove-item')?.addEventListener('click', function() {
+        const row = this.closest('.item-row');
+        if (container.children.length > 1) {
+            row.remove();
+            itemCount--;
+            itemCountInput.value = itemCount;
+            updateTotals();
+        }
+    });
 
-    previewBtn.addEventListener('click', function(e) {
-        // Build modal content
-        const data = window.calcData || {};
-        const kg = parseFloat(totalKg.value) || 0;
-        const clean = cleaning.checked;
+    addBtn.addEventListener('click', addItemRow);
+    updateTotals();
+
+    previewBtn.addEventListener('click', function() {
+        const totals = window._totals || { grinding: 0, cleaning: 0, grand: 0 };
+        const customerName = document.querySelector('input[name="name"]').value || 'N/A';
+        let itemsHtml = '';
+        document.querySelectorAll('.item-row').forEach(row => {
+            const category = row.querySelector('.category-select').options[row.querySelector('.category-select').selectedIndex]?.text || 'N/A';
+            const kg = row.querySelector('.total-kg').value || 0;
+            const cleaning = row.querySelector('input[type="checkbox"]').checked ? 'Yes' : 'No';
+            itemsHtml += `<p><strong>${category}</strong> - ${kg}kg, Cleaning: ${cleaning}</p>`;
+        });
         modalBody.innerHTML = `
-            <p><strong>Customer:</strong> ${document.querySelector('input[name="name"]').value || 'N/A'}</p>
-            <p><strong>Total KG:</strong> ${kg}</p>
-            <p><strong>Cleaning:</strong> ${clean ? 'Yes' : 'No'}</p>
+            <p><strong>Customer:</strong> ${customerName}</p>
             <hr>
-            <p><strong>Grinding Charges:</strong> ₹${(data.grinding_charges || 0).toFixed(2)}</p>
-            <p><strong>Cleaning Charges:</strong> ₹${(data.cleaning_charges || 0).toFixed(2)}</p>
-            <h5><strong>Total Amount:</strong> ₹${(data.total_amount || 0).toFixed(2)}</h5>
+            <h6>Items:</h6>
+            ${itemsHtml}
+            <hr>
+            <p><strong>Grinding Total:</strong> ₹${totals.grinding.toFixed(2)}</p>
+            <p><strong>Cleaning Total:</strong> ₹${totals.cleaning.toFixed(2)}</p>
+            <h5><strong>Grand Total:</strong> ₹${totals.grand.toFixed(2)}</h5>
         `;
     });
 
