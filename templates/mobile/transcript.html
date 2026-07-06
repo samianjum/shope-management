@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Transcript - Order #{{ order.id }}</title>
+<style>
+    body { font-family: Arial, sans-serif; padding: 40px; }
+    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+    .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; color: rgba(0,0,0,0.1); pointer-events: none; }
+    .footer { text-align: center; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 8px; border: 1px solid #ccc; }
+    .right { text-align: right; }
+</style>
+</head>
+<body>
+<div class="watermark">PAID</div>
+<div class="header">
+    <h1>{{ tenant.name }}</h1>
+    <p>Flour Mill Invoice</p>
+</div>
+<h3>Order #{{ order.id }}</h3>
+<p><strong>Customer:</strong> {{ order.customer.name }}<br>
+<strong>Phone:</strong> {{ order.customer.phone }}<br>
+<strong>Address:</strong> {{ order.customer.address }}</p>
+<table>
+    <tr><th>Item</th><th>KG</th><th>Rate</th><th>Amount</th></tr>
+    <tr><td>Grinding</td><td>{{ order.total_kg }}</td><td>{{ order.grinding_charges|divide:order.total_kg }}</td><td class="right">₹{{ order.grinding_charges }}</td></tr>
+    {% if order.is_cleaning_done %}
+    <tr><td>Cleaning</td><td>{{ order.total_kg }}</td><td>{{ order.cleaning_charges|divide:order.total_kg }}</td><td class="right">₹{{ order.cleaning_charges }}</td></tr>
+    {% endif %}
+    <tr><th colspan="3">Total</th><th class="right">₹{{ order.total_amount }}</th></tr>
+    <tr><td colspan="3">Amount Paid</td><td class="right">₹{{ order.amount_paid }}</td></tr>
+    <tr><td colspan="3">Remaining</td><td class="right">₹{{ order.remaining_amount }}</td></tr>
+</table>
+<div class="footer">
+    <p>Generated on {% now "d M Y H:i" %} | Thank you!</p>
+</div>
+</body>
+</html>

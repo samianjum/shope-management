@@ -1,0 +1,29 @@
+
+{% extends "mobile/base.html" %}
+{% block content %}
+<h2>{{ order_type|title }} Orders</h2>
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control" placeholder="Search by customer, phone, order ID" value="{{ request.GET.search }}">
+        <button class="btn btn-outline-secondary">Search</button>
+    </div>
+</form>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Customer</th><th>KG</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Ready</th><th>Action</th></tr>
+    {% for o in orders %}
+    <tr>
+        <td>{{ o.id }}</td><td>{{ o.customer.name }}</td><td>{{ o.total_kg }}</td><td>₹{{ o.total_amount }}</td><td>₹{{ o.amount_paid }}</td><td>₹{{ o.remaining_amount }}</td>
+        <td>
+            {% if o.status == 'ready' %}<span class="badge bg-warning">Ready</span>
+            {% elif o.status == 'completed' %}<span class="badge bg-success">Done</span>
+            {% else %}<span class="badge bg-secondary">Pending</span>{% endif %}
+            {% if o.payment_status == 'partial' %}<span class="badge bg-info">Partial</span>{% endif %}
+        </td>
+        <td>{{ o.ready_time|date:"d M H:i" }}</td>
+        <td><a href="/portal/{{ tenant.schema_name }}/chakki/order/{{ o.id }}/" class="btn btn-sm btn-primary">View</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="9">No orders found.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

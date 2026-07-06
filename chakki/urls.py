@@ -5,6 +5,10 @@ from . import views
 urlpatterns = [
     path('', views.dashboard, name='chakki_dashboard'),
     path('add/', views.add_order, name='add_order'),
+    path('calculate/', views.calculate_order, name='calculate_order'),
+    path('orders/<str:order_type>/', views.order_list, name='order_list'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     path('complete/<int:order_id>/', views.complete_order, name='complete_order'),
+    path('transcript/<int:order_id>/', views.generate_transcript, name='generate_transcript'),
     path('settings/', views.settings_view, name='chakki_settings'),
 ]

@@ -1,0 +1,51 @@
+
+{% extends "mobile/base.html" %}
+{% block content %}
+<h2>Order #{{ order.id }}</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5>Customer</h5>
+            <p><strong>Name:</strong> {{ order.customer.name }}</p>
+            <p><strong>Phone:</strong> {{ order.customer.phone }}</p>
+            <p><strong>Address:</strong> {{ order.customer.address }}</p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5>Order Details</h5>
+            <p><strong>Total KG:</strong> {{ order.total_kg }}</p>
+            <p><strong>Grinding Charges:</strong> ₹{{ order.grinding_charges }}</p>
+            <p><strong>Cleaning Charges:</strong> ₹{{ order.cleaning_charges }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+            <p><strong>Amount Paid:</strong> ₹{{ order.amount_paid }}</p>
+            <p><strong>Remaining:</strong> ₹{{ order.remaining_amount }}</p>
+            <p><strong>Status:</strong> {{ order.status }} | Payment: {{ order.payment_status }}</p>
+            <p><strong>Ready Time:</strong> {{ order.ready_time|date:"d M Y H:i" }}</p>
+        </div>
+    </div>
+</div>
+<div class="mt-3">
+    {% if order.status != 'completed' %}
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-auto">
+            <input type="number" name="payment_amount" step="0.01" class="form-control" placeholder="Payment amount" required>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-success">Add Payment</button>
+        </div>
+    </form>
+    <div class="mt-2">
+        {% if order.remaining_amount == 0 %}
+            <a href="/portal/{{ tenant.schema_name }}/chakki/complete/{{ order.id }}/" class="btn btn-primary">Complete Order</a>
+        {% else %}
+            <span class="text-muted">Complete order requires full payment (remaining: ₹{{ order.remaining_amount }})</span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+<div class="mt-3">
+    <a href="/portal/{{ tenant.schema_name }}/chakki/transcript/{{ order.id }}/" target="_blank" class="btn btn-secondary">📄 Transcript</a>
+</div>
+{% endblock %}
